@@ -10,7 +10,7 @@ Desktop 外壳已经能启动完整 Harness Host，但没有产品自有的学�
 
 ## Decision
 
-**学员可见界面统一归一个 Desktop 专用 Client 插件。** `@deepseek-ai/dsh-client-ui-desktop-customization` 进入 Web bundle，但只有 `DSH_DESKTOP=1` 时对应配置行才启用。它通过设置插槽注册“背景”“软件更新”和百炼视觉增强，通过 `shell.overlay` 注册赋范空间品牌入口。普通 `dsh web` 部署继续保留原有组合。
+**学员可见界面统一归一个 Desktop 专用 Client 插件。** `@deepseek-ai/dsh-client-ui-desktop-customization` 进入 Web bundle，但只有 `DSH_DESKTOP=1` 时对应入口才启用。它通过设置插槽注册“背景”“软件更新”和完整的百炼视觉增强配置，通过 `conversation.input.left` 增量注册视觉增强快捷按钮，并通过 `shell.overlay` 注册赋范空间品牌入口。普通 `dsh web` 部署继续保留原有组合。
 
 **全新 Desktop 首次启动默认使用中文。** Electron 标记会在 Client tree 启动前选择产品的中文兜底，不受操作系统浏览器语言影响。Host 中已保存的语言偏好仍然优先，因此学员切换到英文后可以继续保留选择；普通 Web 在没有偏好时仍跟随浏览器语言。
 
@@ -20,7 +20,7 @@ Desktop 外壳已经能启动完整 Harness Host，但没有产品自有的学�
 
 **外部品牌链接不接管应用内导航。** 老师提供的 Logo 随 Web 前端构建，与“赋范空间出品”一起显示在全局浮层。其 HTTPS 链接会被现有 BrowserWindow 策略拒绝为应用内窗口，转交系统浏览器打开。
 
-**百炼增强每个 Agent，但不替换主模型。** Host 只保存 `DASHSCOPE_API_KEY` 凭证，并提供一个仅本机回环连接可调用的原子开启操作。并发开启请求会串行执行：每个请求可选保存自己的 Key，使用当时的当前凭证把选定验证图片发送给 `qwen3.8-max`，只有响应成功才提交开启设置；普通设置 RPC 可以关闭功能，但不能开启。开启期间，Host 向每个现存 Agent scope 以及未来 Agent scope 挂载同一个 `vision-enhancement` Skill、运行时上下文和只允许读取工作区图片的 `vision_analyze` Tool。上传图片继续保留在 Session 可见历史中；图片送入文本型 DeepSeek 前用于替代图片的百炼识别文本会写成必需的 `vision/observation` 事件，并在会话重建时复用。Desktop Bundle 把共享附件服务的单图上限提高到界面声明的 10 MB，普通 Web 仍使用 5 MB 默认值。
+**百炼增强每个 Agent，但不替换主模型。** Host 只保存 `DASHSCOPE_API_KEY` 凭证，并提供一个仅本机回环连接可调用的原子开启操作。并发开启请求会串行执行：每个请求可选保存自己的 Key，使用当时的当前凭证把选定验证图片发送给 `qwen3.8-max`，只有响应成功才提交开启设置；普通设置 RPC 可以关闭功能，但不能开启。设置行与对话区快捷按钮共享一个浏览器状态控制器，并根据 Host 的设置、凭证和连接失效通知刷新，不各自维护开启值。保存期间收到的失效通知会合并为操作结束后的一次最终状态刷新，避免中间凭证事件让界面短暂闪回未开启。关闭状态下点击快捷按钮会打开同一个真实图片验证弹窗；开启状态下点击会通过现有设置命名空间关闭能力。悬浮卡片说明对话图片与工作区图片的支持范围，同时保留完整设置入口。开启期间，Host 向每个现存 Agent scope 以及未来 Agent scope 挂载同一个 `vision-enhancement` Skill、运行时上下文和只允许读取工作区图片的 `vision_analyze` Tool。上传图片继续保留在 Session 可见历史中；图片送入文本型 DeepSeek 前用于替代图片的百炼识别文本会写成必需的 `vision/observation` 事件，并在会话重建时复用。Desktop Bundle 把共享附件服务的单图上限提高到界面声明的 10 MB，普通 Web 仍使用 5 MB 默认值。
 
 ## Alternatives considered
 
@@ -34,6 +34,8 @@ Desktop 外壳已经能启动完整 Harness Host，但没有产品自有的学�
 
 **使用 OpenRouter，或把百炼换成主对话模型。** 不采用：学员已经使用 DeepSeek Harness 工作流和百炼凭证。视觉提供方只承担有边界的图片分析旁路，既有 DeepSeek 路线、Preset 行为和文本历史保持不变。
 
+**让对话区快捷按钮独立维护本地开关状态。** 不采用：设置失败、凭证替换或 Host 重连后，两套乐观状态可能互相矛盾。两个入口统一投影 Host 状态，并保留设置行作为完整配置路径。
+
 ## Consequences
 
-学员启动后即可看到默认品牌背景，可在应用内选择并持久保存自己的图片，也可以恢复默认；未来的更新入口同样已经可见；所有当前与未来 Agent 还能共享同一套图片理解流程。代价是增加一条狭窄的 preload/IPC 通道、一个 Desktop Client 插件，以及验证或图片分析产生的百炼调用费用。处理后的背景在主进程中限制为 6 MB，以仅所有者可读写的 JSON 保存；背景原图不会离开渲染器。视觉图片只支持不超过 10 MB 的 PNG、JPEG、WebP 或 GIF，在用户明确开启后发送到百炼官方接口，记录中不含凭证。新增的 keyless 真实 Web 组合快照固定了首次图片回合与 Host 重启恢复：持久化记录同时包含原图、位于 DeepSeek 回答之前的一条观察，以及不再次调用百炼就能复用观察的恢复回答。赋范空间更新源是这个定制应用唯一的更新权威，绝不会跟随上游安装包。显式同版本基准可以让已分发测试包报告 `up-to-date`，但真实跨版本安装仍需 macOS DMG+ZIP、Windows NSIS、Linux AppImage、版本元数据以及相应签名后才能闭环。
+学员启动后即可看到默认品牌背景，可在应用内选择并持久保存自己的图片，也可以恢复默认；未来的更新入口同样已经可见；图片理解流程可以直接从对话输入区触达，同时仍保留完整设置入口。代价是增加一条狭窄的 preload/IPC 通道、一个 Desktop Client 插件、一个额外的对话区控件，以及验证或图片分析产生的百炼调用费用。处理后的背景在主进程中限制为 6 MB，以仅所有者可读写的 JSON 保存；背景原图不会离开渲染器。视觉图片只支持不超过 10 MB 的 PNG、JPEG、WebP 或 GIF，在用户明确开启后发送到百炼官方接口，记录中不含凭证。新增的 keyless 真实 Web 组合快照固定了首次图片回合与 Host 重启恢复：持久化记录同时包含原图、位于 DeepSeek 回答之前的一条观察，以及不再次调用百炼就能复用观察的恢复回答。赋范空间更新源是这个定制应用唯一的更新权威，绝不会跟随上游安装包。显式同版本基准可以让已分发测试包报告 `up-to-date`，但真实跨版本安装仍需 macOS DMG+ZIP、Windows NSIS、Linux AppImage、版本元数据以及相应签名后才能闭环。
