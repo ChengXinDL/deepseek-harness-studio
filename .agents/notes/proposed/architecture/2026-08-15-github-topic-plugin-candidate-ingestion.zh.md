@@ -8,7 +8,7 @@ Status: proposed
 
 DeepSeek Harness 推荐使用 GitHub `dsh-plugin` Topic 作为发现机制，但 Topic 匹配只能证明仓库选择了一个标签，不能证明仓库包含可安装的 Harness Bundle、包版本不可变、代码经过审核或具有安装资格。2026-08-15 查阅的上游公开文档没有描述另一套官方提交、审核或已验证市场收录流程。
 
-[DeepSeek Harness Desktop 仓库](https://github.com/fufankeji/deepseek-harness-desktop)已经设置 `dsh-plugin`，并被[GitHub Topic](https://github.com/topics/dsh-plugin)索引，因此应用已经能通过[官方 README](https://github.com/deepseek-ai/deepseek-harness#community-and-support)指定的渠道被发现。但是，Desktop 仓库属于应用 monorepo：其[根包](../../../../package.json)和[Desktop 包](../../../../apps/desktop/package.json)都是私有应用包，且没有声明 `dsh.bundle.patch`。把其中任一包改成 Bundle 都会错误描述分发单元，并把应用发布与插件安装耦合起来。
+[DeepSeek Harness Studio 仓库](https://github.com/fufankeji/deepseek-harness-studio)已经设置 `dsh-plugin`，并被[GitHub Topic](https://github.com/topics/dsh-plugin)索引，因此应用已经能通过[官方 README](https://github.com/deepseek-ai/deepseek-harness#community-and-support)指定的渠道被发现。但是，Studio 仓库仍属于桌面应用 monorepo：其[根包](../../../../package.json)和[Desktop 包](../../../../apps/desktop/package.json)都是私有应用包，且没有声明 `dsh.bundle.patch`。把其中任一包改成 Bundle 都会错误描述分发单元，并把应用发布与插件安装耦合起来。
 
 插件中心注册表只接受经过审核、不可变的精确版本，并明确排除任意包来源。[Feature Map](../../../../docs/specs/feature-map.md#out-of-scope-and-deferred-items)允许外部仓库在后续成为运营审核输入，而[插件中心架构](../../../../docs/architecture/plugin-center.md)继续以注册表作为目录权限源，以所选 Profile 作为本地安装真源。未来实现需要一项持久决策，说明 Topic 发现如何接入该系统，同时不取得安装权限。
 
