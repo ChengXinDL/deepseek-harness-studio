@@ -1,0 +1,39 @@
+# Agent Note: Desktop learner customization
+
+Status: implemented
+
+English | [中文](2026-08-14-desktop-learner-customization.zh.md)
+
+## Problem
+
+The Desktop shell started the complete Harness Host but offered no product-owned learner customization. A previously proven image-skin project could generate and install one fixed plugin, but learners still had to leave the application and repeat the packaging flow for every image. The source application also had no visible update lifecycle, team attribution, or way for its text-only DeepSeek Agents to understand images. These additions must preserve the renderer sandbox, keep credentials out of browser storage and session logs, avoid uploading background images, and avoid claiming that source development runs can install releases before signed platform artifacts exist.
+
+## Decision
+
+**One Desktop-only client plugin owns the visible learner surfaces.** `@deepseek-ai/dsh-client-ui-desktop-customization` is present in the Web bundle but its rows are disabled unless `DSH_DESKTOP=1`. It registers Background, Software update, and Bailian visual-enhancement controls through the settings slots and the Beyondata attribution through `shell.overlay`. Ordinary `dsh web` deployments therefore keep their original composition.
+
+**A fresh Desktop renderer starts in Chinese.** The Electron marker selects the product's Chinese fallback before the client tree boots, independent of the operating-system browser language. A stored Host language preference still wins, so learners may switch to English and keep that choice; ordinary Web continues to follow the browser when no preference exists.
+
+**Background processing stays local and the main process owns durable validation.** The renderer accepts PNG, JPEG, or WebP up to 16 MB, cover-crops it to a 1920×1080 WebP, extracts four palette colors, and applies a reversible ThemeRuntime token layer. A fixed preload method sends only the processed data and numeric settings to the main process. The main process independently validates the WebP data URL, decoded size, ranges, and palette before atomically writing an owner-only `appearance.json` under Electron `userData`. Reset removes that document and returns to the bundled default image.
+
+**The updater has a real main-process state machine and an honest development state.** `electron-updater` owns release checks, explicit downloads, progress, and restart installation. The preload exposes only get, check, download, install, and state subscription methods on fixed channels. Source runs never contact a provider and render `development`; packaged builds use electron-builder's generic HTTPS release metadata. Provider failures become stable, actionable Chinese messages while the technical error stays in the main-process log. The release command validates one channel and version, payload sizes, SHA-512 values, blockmaps, and the macOS ZIP before uploading immutable artifacts and replacing mutable channel metadata last. Platform installer targets, signing, notarization, Authenticode, and uploaded metadata remain release work rather than simulated development behavior.
+
+**External attribution stays outside the renderer navigation.** The supplied Logo is built into the Web frontend and rendered beside “赋范空间出品” in the frame overlay. Its HTTPS anchor is denied as an in-app window by the existing BrowserWindow policy and handed to the system browser.
+
+**Bailian augments every Agent without becoming its primary model.** The Host stores only the `DASHSCOPE_API_KEY` credential and exposes one loopback-only atomic enable operation. Concurrent enable requests are serialized: each request optionally stores its key, validates the selected image with that exact current credential through `qwen3.8-max`, and commits the setting only after success; ordinary settings RPCs can disable the feature but cannot enable it. While enabled, the Host mounts one `vision-enhancement` Skill, runtime context, and workspace-contained `vision_analyze` Tool into every live Agent scope and into future Agent scopes. Uploaded images remain in the Session surface; the exact Bailian text that replaces an image for the text-only DeepSeek request is appended as a required `vision/observation` event and reused on reconstruction. The Desktop bundle raises the shared attachment provider's per-image limit to the UI's stated 10 MB while ordinary Web keeps its 5 MB default.
+
+## Alternatives considered
+
+**Ship the generated `harness-image-skin` tarball unchanged.** Rejected because it embeds one image and requires plugin generation, installation, and Host restart for every change. It remains the verified mechanism source, not the learner interaction.
+
+**Expose filesystem paths or generic IPC to the browser.** Rejected because the loopback page does not need Node authority. The fixed bridge carries only validated appearance values and updater actions.
+
+**Store the custom image in browser storage.** Rejected because the Desktop Host binds an operating-system-assigned port on every launch, so origin-scoped browser persistence would not reliably survive restarts. Electron `userData` gives one stable private owner.
+
+**Pretend update checks work in the source build.** Rejected because electron-updater verifies and installs platform artifacts, not a checkout. The visible development state preserves the complete UI without inventing an update result.
+
+**Use OpenRouter or switch the primary conversation model.** Rejected because learners already receive a DeepSeek Harness workflow and a Bailian credential. The visual provider stays a bounded image-analysis sidecar, so the existing DeepSeek route, Preset behavior, and text history remain intact.
+
+## Consequences
+
+Learners get a default branded background, can choose and persist their own image without installing a plugin, can restore the default, can see the future update path, and can give all current and future Agents the same image-understanding workflow. The price is a narrow preload and IPC surface, a Desktop client package, and paid Bailian calls for validation or image analysis. Processed backgrounds are bounded to 6 MB in the main process and stored as owner-only JSON; background originals never leave the renderer. Visual images are limited to PNG, JPEG, WebP, or GIF at 10 MB, sent only to the official Bailian endpoint after explicit enablement, and recorded without the credential. A keyless assembled-Web snapshot pins the first image turn and a Host restart: the persisted transcript contains the original image, one observation before the DeepSeek answer, and a resumed answer that reuses that observation without another Bailian request. The Beyondata feed is the only update authority for this customized application; it never follows upstream installers. An explicit same-version baseline may make already distributed test builds report `up-to-date`, but real cross-version installation remains gated on macOS DMG+ZIP, Windows NSIS, Linux AppImage, version metadata, and signing where required.

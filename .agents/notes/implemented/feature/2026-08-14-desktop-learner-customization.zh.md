@@ -1,0 +1,39 @@
+# Agent Note: 桌面学员版个性化
+
+Status: implemented
+
+[English](2026-08-14-desktop-learner-customization.md) | 中文
+
+## Problem
+
+Desktop 外壳已经能启动完整 Harness Host，但没有产品自有的学员个性化能力。此前真实跑通的图片换肤项目可以生成并安装一个固定插件，可是学员每次换图仍要离开应用、重新走生成和安装流程。源码应用也没有可见的更新生命周期、团队归属，以及让文本型 DeepSeek Agent 理解图片的路径。这些新增能力必须保留渲染器 sandbox，不把凭证放进浏览器存储或 Session 日志，不上传学员背景图片，也不能在签名三端产物尚不存在时声称源码开发版已经能安装更新。
+
+## Decision
+
+**学员可见界面统一归一个 Desktop 专用 Client 插件。** `@deepseek-ai/dsh-client-ui-desktop-customization` 进入 Web bundle，但只有 `DSH_DESKTOP=1` 时对应配置行才启用。它通过设置插槽注册“背景”“软件更新”和百炼视觉增强，通过 `shell.overlay` 注册赋范空间品牌入口。普通 `dsh web` 部署继续保留原有组合。
+
+**全新 Desktop 首次启动默认使用中文。** Electron 标记会在 Client tree 启动前选择产品的中文兜底，不受操作系统浏览器语言影响。Host 中已保存的语言偏好仍然优先，因此学员切换到英文后可以继续保留选择；普通 Web 在没有偏好时仍跟随浏览器语言。
+
+**背景在本地处理，主进程负责持久化校验。** 渲染器接受不超过 16 MB 的 PNG、JPEG 或 WebP，按 cover 方式裁切为 1920×1080 WebP，提取四种配色，并应用可卸载的 ThemeRuntime Token 层。固定 preload 方法只把处理后的数据与数值设置交给主进程。主进程再次验证 WebP Data URL、解码大小、参数范围和配色，再把 `appearance.json` 原子写入 Electron `userData`，权限仅限文件所有者。恢复默认会删除该文档并回到随应用构建的默认图片。
+
+**更新能力采用真实主进程状态机，开发版状态如实呈现。** `electron-updater` 负责检查版本、显式下载、进度和重启安装。preload 只通过固定通道暴露读取、检查、下载、安装和状态订阅。源码运行不会访问发布源，界面显示 `development`；打包版本读取 electron-builder 生成的通用 HTTPS 发布元数据。提供方失败会转成稳定、可行动的中文提示，技术异常只保留在主进程日志中。发布命令会验证单一渠道和版本、载荷大小、SHA-512、blockmap 与 macOS ZIP，再先上传不可变产物，最后覆盖可变渠道元数据。三端安装器、签名、公证、Authenticode 和上传元数据仍属于发布阶段，不在开发阶段伪造。
+
+**外部品牌链接不接管应用内导航。** 老师提供的 Logo 随 Web 前端构建，与“赋范空间出品”一起显示在全局浮层。其 HTTPS 链接会被现有 BrowserWindow 策略拒绝为应用内窗口，转交系统浏览器打开。
+
+**百炼增强每个 Agent，但不替换主模型。** Host 只保存 `DASHSCOPE_API_KEY` 凭证，并提供一个仅本机回环连接可调用的原子开启操作。并发开启请求会串行执行：每个请求可选保存自己的 Key，使用当时的当前凭证把选定验证图片发送给 `qwen3.8-max`，只有响应成功才提交开启设置；普通设置 RPC 可以关闭功能，但不能开启。开启期间，Host 向每个现存 Agent scope 以及未来 Agent scope 挂载同一个 `vision-enhancement` Skill、运行时上下文和只允许读取工作区图片的 `vision_analyze` Tool。上传图片继续保留在 Session 可见历史中；图片送入文本型 DeepSeek 前用于替代图片的百炼识别文本会写成必需的 `vision/observation` 事件，并在会话重建时复用。Desktop Bundle 把共享附件服务的单图上限提高到界面声明的 10 MB，普通 Web 仍使用 5 MB 默认值。
+
+## Alternatives considered
+
+**原样内置生成好的 `harness-image-skin` 安装包。** 不采用：它只包含一张固定图片，每次更换仍需重新生成、安装和重启 Host。它继续作为已验证机制来源，而不是学员交互界面。
+
+**向浏览器暴露文件路径或通用 IPC。** 不采用：本地回环页面不需要 Node 权限。固定 bridge 只传递经过校验的外观数值和更新动作。
+
+**把自定义图片放进浏览器存储。** 不采用：Desktop Host 每次启动使用操作系统分配的端口，按 Origin 隔离的浏览器数据不能可靠跨启动复用。Electron `userData` 提供稳定、私有的单一所有者。
+
+**在源码开发版中伪装更新检查成功。** 不采用：electron-updater 校验并安装的是平台产物，不是源码目录。明确的开发版状态既保留完整界面，也不制造虚假更新结果。
+
+**使用 OpenRouter，或把百炼换成主对话模型。** 不采用：学员已经使用 DeepSeek Harness 工作流和百炼凭证。视觉提供方只承担有边界的图片分析旁路，既有 DeepSeek 路线、Preset 行为和文本历史保持不变。
+
+## Consequences
+
+学员启动后即可看到默认品牌背景，可在应用内选择并持久保存自己的图片，也可以恢复默认；未来的更新入口同样已经可见；所有当前与未来 Agent 还能共享同一套图片理解流程。代价是增加一条狭窄的 preload/IPC 通道、一个 Desktop Client 插件，以及验证或图片分析产生的百炼调用费用。处理后的背景在主进程中限制为 6 MB，以仅所有者可读写的 JSON 保存；背景原图不会离开渲染器。视觉图片只支持不超过 10 MB 的 PNG、JPEG、WebP 或 GIF，在用户明确开启后发送到百炼官方接口，记录中不含凭证。新增的 keyless 真实 Web 组合快照固定了首次图片回合与 Host 重启恢复：持久化记录同时包含原图、位于 DeepSeek 回答之前的一条观察，以及不再次调用百炼就能复用观察的恢复回答。赋范空间更新源是这个定制应用唯一的更新权威，绝不会跟随上游安装包。显式同版本基准可以让已分发测试包报告 `up-to-date`，但真实跨版本安装仍需 macOS DMG+ZIP、Windows NSIS、Linux AppImage、版本元数据以及相应签名后才能闭环。
