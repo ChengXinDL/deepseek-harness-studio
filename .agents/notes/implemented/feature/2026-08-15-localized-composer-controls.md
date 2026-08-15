@@ -16,6 +16,8 @@ The Chinese composer still displayed the built-in permission presets as `Read On
 
 **The composer exposes only request-scoped settings already owned by the adapter.** Selecting a DeepSeek thinking option still submits the existing `reasoningEffort` field through `session.selectModel`. Endpoint, credential, context-capacity, output-cap, timeout, retry, and catalog configuration stay in the existing DeepSeek settings surface; no synthetic speed value or new wire field is introduced.
 
+**The control geometry follows the established side-menu interaction.** The Model and Thinking mode rows remain visible while hover, keyboard focus, or click opens the matching card on their right. The permission card adds a DeepSeek Harness heading, concise consequences, a trailing selection check, and warning emphasis for Full access. These presentation changes reuse the existing selection commands and Full-access confirmation gate.
+
 ## Alternatives considered
 
 **Remove the reasoning row for DeepSeek.** Rejected because the shipped DeepSeek adapter explicitly advertises `off`, `high`, and `max`, and removing the row would hide a real per-request capability.
@@ -26,4 +28,4 @@ The Chinese composer still displayed the built-in permission presets as `Read On
 
 ## Consequences
 
-Chinese desktop sessions now show a complete Chinese permission menu and a DeepSeek-specific thinking menu without changing durable state or backend protocols. English behavior and custom provider labels remain available, and generic model providers continue to render their own metadata. The visible controls gain focused component and browser coverage, while the implementation accepts the small duplicated locale vocabulary required by the client-package isolation rules.
+Chinese desktop sessions now show a complete Chinese permission menu and a DeepSeek-specific hover-side thinking menu without changing durable state or backend protocols. English behavior and custom provider labels remain available, and generic model providers continue to render their own metadata. The visible controls gain focused component and browser coverage, while the implementation accepts the small duplicated locale vocabulary required by the client-package isolation rules.
