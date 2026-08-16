@@ -12,7 +12,7 @@ Development previews need a macOS package that can be reviewed immediately and a
 
 A preview uses an immutable `desktop-preview-v<version>` tag and a new prerelease. The macOS arm64 ZIP is built locally from that tag and uploaded first. The dispatch-only Windows preview workflow checks out the same tag, validates the release name, asset name, and accepted `app.asar` SHA-256, then downloads that exact macOS ZIP.
 
-The Windows runner extracts the accepted platform-neutral application payload, stages its Host and desktop resources, builds an unsigned Windows x64 Electron shell and NSIS installer, and restores the byte-exact accepted `app.asar`. It silently installs the result, observes the packaged Host, and silently uninstalls it. Only after those checks pass does the workflow retain an Actions artifact and attach the installer, optional blockmap, checksum, and verification receipt to the existing prerelease. Existing release assets are never overwritten. The signed `desktop-v<version>` workflow remains the formal release path.
+The Windows runner extracts the accepted platform-neutral application payload, stages its Host and desktop resources, builds an unsigned Windows x64 Electron shell and NSIS installer, and restores the byte-exact accepted `app.asar`. It silently installs the result, observes the packaged Host, and silently uninstalls it. Only after those checks pass does the workflow retain the installer, optional blockmap, checksum, and verification receipt in an Actions artifact while attaching only the installer to the existing prerelease. Existing release assets are never overwritten. The signed `desktop-v<version>` workflow remains the formal release path.
 
 ## Alternatives considered
 
@@ -24,4 +24,4 @@ The Windows runner extracts the accepted platform-neutral application payload, s
 
 ## Consequences
 
-Reviewers can receive the macOS preview before the Windows runner finishes while both platforms retain the same application payload. Windows preview publication is conditional on native install, Host-start, and uninstall evidence. These preview packages remain unsigned development artifacts; signed public releases still require the formal release workflow and its signing environments.
+Reviewers can receive the macOS preview before the Windows runner finishes while both platforms retain the same application payload. Windows preview publication is conditional on native install, Host-start, and uninstall evidence, but the public download list contains only the two files users can run. Technical evidence remains available to maintainers through the retained Actions artifact. These preview packages remain unsigned development artifacts; signed public releases still require the formal release workflow and its signing environments.
