@@ -4,6 +4,8 @@ Status: implemented
 
 English | [中文](2026-08-14-desktop-learner-customization.zh.md)
 
+> The later [selectable visual providers decision](2026-08-16-selectable-visual-providers.md) supersedes only this note's Bailian-only provider, credential-reference, and endpoint decisions. All other decisions remain current.
+
 ## Problem
 
 The Desktop shell started the complete Harness Host but offered no product-owned learner customization. A previously proven image-skin project could generate and install one fixed plugin, but learners still had to leave the application and repeat the packaging flow for every image. The source application also had no visible update lifecycle, team attribution, or way for its text-only DeepSeek Agents to understand images. These additions must preserve the renderer sandbox, keep credentials out of browser storage and session logs, avoid uploading background images, and avoid claiming that source development runs can install releases before signed platform artifacts exist.

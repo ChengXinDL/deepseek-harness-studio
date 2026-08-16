@@ -4,6 +4,8 @@ Status: implemented
 
 [English](2026-08-14-desktop-learner-customization.md) | 中文
 
+> 后续的[可选择视觉提供方决策](2026-08-16-selectable-visual-providers.md)仅取代本记录中“只支持百炼”的提供方、凭证引用与端点决定；其余决定继续有效。
+
 ## Problem
 
 Desktop 外壳已经能启动完整 Harness Host，但没有产品自有的学员个性化能力。此前真实跑通的图片换肤项目可以生成并安装一个固定插件，可是学员每次换图仍要离开应用、重新走生成和安装流程。源码应用也没有可见的更新生命周期、团队归属，以及让文本型 DeepSeek Agent 理解图片的路径。这些新增能力必须保留渲染器 sandbox，不把凭证放进浏览器存储或 Session 日志，不上传学员背景图片，也不能在签名三端产物尚不存在时声称源码开发版已经能安装更新。
