@@ -10,7 +10,7 @@ The desktop GUI asks users to type an absolute path when they add an existing wo
 
 ## Decision
 
-Add a single-folder `host.pickDirectory` RPC and expose it through `WorkspaceRuntime`. The workspace menu presents the flat **Add workspace...** action (two actions when this was decided — **Open local folder...** beside a create-by-name entry the [one-route Note](../simplification/2026-07-31-one-route-to-add-a-workspace.md) later removed). Selecting a folder reuses the existing `workspace.create({ path })` flow, selects the returned workspace, and starts a blank session.
+Add a single-folder selection operation. Electron exposes it through a fixed preload method backed by the main process; ordinary local Web deployments use the `host.pickDirectory` RPC exposed through `WorkspaceRuntime`. The workspace menu presents the flat **Add workspace...** action (two actions when this was decided — **Open local folder...** beside a create-by-name entry the [one-route Note](../simplification/2026-07-31-one-route-to-add-a-workspace.md) later removed). Selecting a folder reuses the existing `workspace.create({ path })` flow, selects the returned workspace, and starts a blank session.
 
 The workspace manager must upsert the returned workspace before the selection callback runs. A newly adopted directory therefore renders its basename immediately. Reopening an already registered path preserves its existing workspace title.
 
@@ -25,23 +25,26 @@ The workspace manager must upsert the returned workspace before the selection ca
 
 ## Host boundary
 
-The native dialog RPC is accepted only from a loopback socket with same-origin browser metadata. The RPC does not use the default 30-second request timeout because a system dialog may remain open indefinitely; caller and connection aborts still propagate to the platform process.
+The Electron preload exposes no generic IPC method. Its fixed workspace operation is accepted only from the current BrowserWindow and current Host origin, then calls Electron's main-process `dialog.showOpenDialog`; cancellation resolves to `null`. This keeps the packaged desktop path out of auxiliary platform-command and COM processes.
 
-Platform adapters open the dialog without a shell — spawned native tools on POSIX, an in-process COM conversation on Windows:
+The Host native-dialog RPC remains the fallback for ordinary local Web deployments. It is accepted only from a loopback socket with same-origin browser metadata. The RPC does not use the default 30-second request timeout because a system dialog may remain open indefinitely; caller and connection aborts still propagate to the platform process.
 
-- macOS: `osascript` and the system folder chooser.
-- Windows: the koffi `IFileOpenDialog` child process with the best thread DPI awareness the host accepts (per-monitor-v2 when available; PMv2-less hosts cascade to per-monitor or system-aware) ([in-process dialog note](2026-08-02-win32-in-process-folder-dialog.md)); the tier has no fallback — failures surface as-is ([PowerShell chain removal](../simplification/2026-08-04-drop-windows-powershell-picker-fallback.md)).
+Host platform adapters open the dialog without a shell — spawned native tools on POSIX, an in-process COM conversation on Windows:
+
+- macOS: `osascript` and the system folder chooser outside Electron.
+- Windows: the koffi `IFileOpenDialog` child process outside Electron, with the best thread DPI awareness the host accepts (per-monitor-v2 when available; PMv2-less hosts cascade to per-monitor or system-aware) ([in-process dialog note](2026-08-02-win32-in-process-folder-dialog.md)); the tier has no fallback — failures surface as-is ([PowerShell chain removal](../simplification/2026-08-04-drop-windows-powershell-picker-fallback.md)).
 - Linux: `zenity`, with `kdialog` as a fallback when Zenity is unavailable.
 
 ## Alternatives considered
 
 - A custom directory browser duplicates operating-system behavior and permissions, and belongs to the Web implementation rather than this desktop-only change.
+- Routing packaged Desktop selection through the Host's platform adapter was rejected because Electron already owns the application window and native dialog lifecycle; the extra process chain adds failure modes without adding capability.
 - Reusing the manual path field keeps the current error-prone interaction.
 - Adding authentication infrastructure for one local native dialog would expand the change beyond its threat model; loopback and same-origin checks are sufficient for this carrier.
 
 ## Consequences
 
-The current GUI opens one local folder through a native picker on macOS, Windows, and Linux. Cancelling changes no state, failures remain retryable, duplicate paths are idempotent, and distinct same-basename paths coexist as separate Workspaces. The selected workspace and its displayed name refresh before a new blank session starts. This picker is now the only route to a workspace ([one-route Note](../simplification/2026-07-31-one-route-to-add-a-workspace.md)): the operator picks an existing directory, or creates one inside the chooser.
+The current GUI opens one local folder through a native picker on macOS, Windows, and Linux. Packaged Electron runs the chooser in its main process; ordinary local Web deployments keep the Host adapters. Cancelling changes no state, failures remain retryable, duplicate paths are idempotent, and distinct same-basename paths coexist as separate Workspaces. The selected workspace and its displayed name refresh before a new blank session starts. This picker is now the only route to a workspace ([one-route Note](../simplification/2026-07-31-one-route-to-add-a-workspace.md)): the operator picks an existing directory, or creates one inside the chooser.
 
 The added host, runtime, component, and GUI tests cover the native boundary, request trust checks, cancellation and failure handling, existing-path reuse, same-basename adoption, and the immediate visible-name update. The privileged RPC remains specific to the local desktop carrier; a remote Web directory browser is outside this decision.
 
