@@ -16,6 +16,8 @@ The overview preserves the catalog's server-owned Featured, Popular, and Recent 
 
 The same page provides “Let Agent find plugins” as a subfeature instead of adding a third top-level entry. Submitting a natural-language requirement deterministically invokes the standard preset's bundled `find-plugins` Skill in the current session. The Skill is user-invocable only, so it does not publish a resident Skill catalog into every ordinary turn. It uses a bounded read-only script to search the public npm `dsh-plugin` catalog, retains exact versions declaring a Bundle patch and immutable distribution evidence, and requires the Agent to recommend at most five items using only returned metadata. When DeepSeek credentials are absent, the client opens the existing Models settings and sends no conversation request. Recommendations return only to the current chat and do not bypass Plugin Center installation authority.
 
+The client contribution explicitly injects the Conversation service and resolves its session-scoped face with `sessions.scope(sessionId).get('conversation')` before sending. It does not rely on an undeclared context shortcut, so the packaged Cordis runtime and the test harness exercise the same service path.
+
 Opening an entry keeps the discovery position and reveals a right-side exact-version panel. The panel reads the existing detail and compatibility decisions, while Install uses the existing compatibility check, explicit broad-authority acknowledgement, immutable plugin id and version intent, and operation progress dialog. An installed entry opens Plugin Center for management instead of duplicating enable, disable, update, or uninstall controls.
 
 ## Interaction ownership

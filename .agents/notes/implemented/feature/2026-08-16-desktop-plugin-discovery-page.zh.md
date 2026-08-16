@@ -16,6 +16,8 @@ Desktop 客户端在 `sidebar.primary.action` 中将 `plugin-discovery` 注册�
 
 同一页面提供“让 Agent 找插件”子功能，而不增加第三个一级入口。用户提交自然语言需求后，当前会话确定性调用标准预设内置的 `find-plugins` Skill；该 Skill 标记为仅用户调用，因此不会向每个普通回合发布常驻 Skill 目录。Skill 通过有界只读脚本搜索公开 npm `dsh-plugin` 目录，过滤出声明 Bundle patch 与不可变分发证据的确定版本，并要求 Agent 只基于返回元数据推荐最多五项。缺少 DeepSeek 凭据时，客户端先打开现有模型设置且不发送对话。推荐只回到当前对话，不绕过插件中心安装权威。
 
+客户端贡献会显式注入 Conversation 服务，并在发送前通过 `sessions.scope(sessionId).get('conversation')` 解析当前会话的作用域服务面；它不依赖未声明的 Context 快捷属性，因此打包后的 Cordis 运行时与测试桩会走同一条服务路径。
+
 打开条目时保留发现位置，并展示右侧确定版本面板。面板读取现有详情和兼容性决定；安装继续使用现有兼容检查、对广泛权限的明确确认、只含不可变插件 id 和版本的意图，以及操作进度对话框。已安装条目会打开插件中心进行管理，而不会重复提供启用、停用、更新或卸载控制。
 
 ## Interaction ownership
