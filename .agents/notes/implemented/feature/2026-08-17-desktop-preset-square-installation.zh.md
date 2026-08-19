@@ -14,7 +14,7 @@ Preset 广场是与插件中心、插件发现平级的一级页面，由同一�
 
 广场区分两种明确的目录来源。**赋范官方**表示由赋范桌面端开发团队维护、随应用内置的内容，不代表 DeepSeek Harness 官方。只读 Desktop 资源交付六套精简能力包：AI WebApp、PPT Office、视频生成、内容工厂、AI 报表和飞书数字员工，并为每套能力提供独立语义 SVG。社区条目继续来自固定服务；服务合同和制品未提供可信 logo 时，客户端显示按视觉变体区分的 SVG 降级图标。两条路径复用同一预览与 Host 导入器，赋范能力包仍故意落到用户根目录，以保持可删除和可重装。
 
-Desktop 主进程拥有指向固定 `https://www.dshdesktop.com/preset/` 源的全部网络请求。严格合同拒绝未知响应结构、非 HTTPS 或外域产物 URL、超大元数据、非法标识与格式错误的哈希。交给 Host 前，Desktop 会重新解析详情，以禁止重定向的方式下载受限 `.dshpreset` 产物，校验声明字节数与 SHA-256，然后通过专用 loopback 二进制入口发送内容。Renderer 只能选择已发布 slug 与校验后的本地目标 id，不能提供来源、下载 URL、文件系统路径或压缩包字节。
+Desktop 主进程拥有指向固定 `https://www.dshdesktop.com/preset/` 服务的全部网络请求。目录元数据的详情与制品 URL 可以使用该主机或其规范根域 `https://dshdesktop.com`，除此之外不接受其他 origin。严格合同拒绝未知响应结构、非 HTTPS 或外域产物 URL、超大元数据、非法标识与格式错误的哈希。交给 Host 前，Desktop 会重新解析详情，以禁止重定向的方式下载受限 `.dshpreset` 产物，校验声明字节数与 SHA-256，然后通过专用 loopback 二进制入口发送内容。Renderer 只能选择已发布 slug 与校验后的本地目标 id，不能提供来源、下载 URL、文件系统路径或压缩包字节。
 
 Host 按压缩大小、展开大小、单文件大小与文件数量限制预览和安装压缩包。它拒绝绝对路径、父级穿越、盘符、反斜杠、NUL 与布局外路径；要求版本化 `dsh-preset` manifest 和 `preset/agent.cordis.yml`；并扫描绝对路径、疑似密钥与 DSH 版本差异警告。安装先写入可写用户 Preset 根目录下的临时目录，用现有 Preset 扫描器验证结果，再原子重命名到目标位置。已有 id（包括系统 id）永远不会被覆盖。
 

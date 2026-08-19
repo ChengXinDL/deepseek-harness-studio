@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-17-desktop-preset-square-installation.md
-2026-08-17-desktop-preset-square-installation.md: 0df55fce33a00db40d3b49df163de469e178fdc3
-2026-08-17-desktop-preset-square-installation.zh.md: b47d33e14f605e435138b36d89c38aa5f8b3338b
+2026-08-17-desktop-preset-square-installation.md: 46d897b984b61f6ca19589876103ded5fde9623d
+2026-08-17-desktop-preset-square-installation.zh.md: 919be3fecdc70b37880c5b5624f3531e16800e5e
