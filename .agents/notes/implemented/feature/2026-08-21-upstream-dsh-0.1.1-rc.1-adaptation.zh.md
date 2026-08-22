@@ -30,4 +30,4 @@ Desktop 打包 Host 的部署根现已包含新增授权包。Studio 视觉桥�
 
 ## 后果
 
-Studio 当前把 Harness 核心标识为 `0.1.1-rc.1`，Electron 应用在下一次桌面打包发布前仍保持 `0.1.0-rc.14`。DeepSeek 原生视觉会绕过兼容视觉提供方；纯文本模型仍可使用 Studio 已验证的云端或自托管视觉路由。后续发布安装包前，必须在 macOS 和 Windows 上重新暂存并验证 Desktop Host 闭包。
+Studio 把 Harness 核心标识为 `0.1.1-rc.1`，Electron 应用标识为 `0.1.0-rc.15`。DeepSeek 原生视觉会绕过兼容视觉提供方；纯文本模型仍可使用 Studio 已验证的云端或自托管视觉路由。每次打包发布都会在发布平台产物前重新暂存并验证 Desktop Host 闭包。

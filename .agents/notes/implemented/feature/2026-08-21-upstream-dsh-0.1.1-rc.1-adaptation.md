@@ -30,4 +30,4 @@ The full Playwright Web matrix was not accepted as evidence on this machine beca
 
 ## Consequences
 
-Studio now identifies its Harness core as `0.1.1-rc.1` while the Electron application remains `0.1.0-rc.14` until the next packaged Desktop release. Native DeepSeek vision bypasses compatible visual providers; text-only models can still use Studio's verified cloud or self-hosted visual routes. A future package release must restage and verify the Desktop Host closure on macOS and Windows before publishing installers.
+Studio identifies its Harness core as `0.1.1-rc.1` while the Electron application identifies as `0.1.0-rc.15`. Native DeepSeek vision bypasses compatible visual providers; text-only models can still use Studio's verified cloud or self-hosted visual routes. Every package release restages and verifies the Desktop Host closure before publishing platform assets.
