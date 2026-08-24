@@ -18,7 +18,9 @@ Desktop 设置界面已经提供插件配置与 Loader 运行清单，但没有�
 
 **插件变更后的 Host 重载保留插件中心。** 安装、更新、启用、停用、卸载与恢复会启动新的 Host generation，Desktop 只在这类重载 URL 中携带受限的一级页面标识；新客户端组合据此恢复插件中心并继续读取持久操作状态，而普通应用启动仍进入会话主页。
 
-**实时来源是预构建 npm DSH Bundle 生态，并使用多种有界发现信号。** `dsh-plugin` 关键词索引提供默认目录；非空搜索同时只执行一次有界 npm 文本查询。完整 scoped 包名以及可选的确定版本直接读取固定 Registry 的 packument 与确定版本元数据，不扫描全量索引。排序把去掉 scope 后的包名尾部视为精确匹配，因此输入 `dsh-web-ui-all` 可以返回 `@linxin666/dsh-web-ui-all`，输入完整 scoped 包名则只返回该包。关键词是社区发现信号，不代表 DeepSeek 背书，也不再是安装资格。
+**实时来源是预构建 npm DSH Bundle 生态，并使用多种有界发现信号。** `dsh-plugin` 关键词索引提供默认目录；非空搜索同时只执行一次有界 npm 文本查询。两次读取会互相补充，但不会作为整体共同失败：宽泛关键词索引受到限流时，成功的文本查询仍可返回排序后的精确匹配；有界文本 endpoint 暂时不可用时，可用索引也仍可服务查询；任一部分结果都会携带既有的网络不可用提示，不会冒充完整响应。完整 scoped 包名以及可选的确定版本直接读取固定 Registry 的 packument 与确定版本元数据，不扫描全量索引。排序把去掉 scope 后的包名尾部视为精确匹配，因此输入 `dsh-web-ui-all` 可以返回 `@linxin666/dsh-web-ui-all`，输入完整 scoped 包名则只返回该包。关键词是社区发现信号，不代表 DeepSeek 背书，也不再是安装资格。
+
+**确定详情补全只重试临时传输失败。** 读取未缓存详情会重新校验确定元数据与不可变制品。一次连接失败、408/425/429 或 5xx 响应会重试一次；服务端提供 `Retry-After` 时会在有界范围内控制等待时间。无效元数据、过大响应、畸形压缩包、身份不匹配和 Bundle 校验失败仍只尝试一次，因为重复相同请求不会使它们变得有效。
 
 **明确 GitHub 仓库地址只负责定位，永远不是制品权威。** Desktop 只接受规范的 `https://github.com/<owner>/<repo>`，从固定 GitHub origin 有界读取默认分支树和有限深度 package manifest，再把 Bundle 声明映射回固定 npm Registry 的确定包。它不会 clone、构建、执行生命周期脚本或直接安装仓库源码。只有确定 npm 元数据与不可变 tarball 继续通过统一校验，才会形成安装权威；映射成功、部分源码未发布、源码-only、未找到 Bundle 与网络失败分别显示可行动提示，不再伪装成普通空结果。
 
@@ -42,7 +44,7 @@ Desktop 设置界面已经提供插件配置与 Loader 运行清单，但没有�
 
 ## 验证
 
-合同测试覆盖畸形目录输入、确定身份、npm 制品 origin、Skill Pack 要求、缓存归属、原子替换与陈旧回退。Desktop 测试覆盖固定桥接方法、发送方/origin 拒绝、关键词与有界文本发现、短名/完整名/带版本名、明确 GitHub 映射、聚合依赖拒绝、封闭 Host 模块复用、Host 闭包缓存失效、确定 tarball 补全、离线权威复用、安装与管理事务以及恢复。真实 npm 验收已解析 `@tt-a1i/archify-dsh@0.1.0`，从实际 Desktop Host manifest 接受其 `@deepseek-ai/dsh-skill-filesystem` 引用，并生成包含 `archify-skill-filesystem` Loader 条目的可安装详情。macOS 真实验收还通过短名、完整名、带版本名和仓库 URL 解析并校验 `@linxin666/dsh-web-ui-all@0.1.19`，观察 13 个 Loader 条目与 12 个客户端模块，在隔离 Profile 安装、完整重启保留，并最终提交卸载且目标运行证据全部消失。客户端测试继续覆盖一级页面、搜索、详情、确认、进度、已安装管理和浏览器开发旅程。`pnpm run dev:desktop:web` 仍是 UI 开发入口，真实包变更必须使用 Desktop。
+合同测试覆盖畸形目录输入、确定身份、npm 制品 origin、Skill Pack 要求、缓存归属、原子替换与陈旧回退。Desktop 测试覆盖固定桥接方法、发送方/origin 拒绝、关键词与文本查询独立失败、短名/完整名/带版本名、明确 GitHub 映射、聚合依赖拒绝、封闭 Host 模块复用、Host 闭包缓存失效、一次临时确定详情重试、确定 tarball 补全、离线权威复用、安装与管理事务以及恢复。真实 npm 验收已解析 `@tt-a1i/archify-dsh@0.1.0`，从实际 Desktop Host manifest 接受其 `@deepseek-ai/dsh-skill-filesystem` 引用，并生成包含 `archify-skill-filesystem` Loader 条目的可安装详情。macOS 真实验收还通过短名、完整名、带版本名和仓库 URL 解析并校验 `@linxin666/dsh-web-ui-all@0.1.19`，观察 13 个 Loader 条目与 12 个客户端模块，在隔离 Profile 安装、完整重启保留，并最终提交卸载且目标运行证据全部消失。客户端测试继续覆盖一级页面、搜索、原地详情重试、确认、进度、已安装管理和浏览器开发旅程。`pnpm run dev:desktop:web` 仍是 UI 开发入口，真实包变更必须使用 Desktop。
 
 ## 后果
 
