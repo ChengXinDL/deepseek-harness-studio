@@ -20,6 +20,8 @@ Status: implemented
 
 `CustomProviderCard` 声明 pi-ai 未提供的路由。它之所以是独立卡片，正因为路由 id 是在这里选定的：一次 `settings.mutate` 在 `providers.<route>` 上设置整个 profile，密钥则经 `credentials.set` 单独传递，使用与既有提供方相同的 `<ROUTE>_API_KEY` 派生。手工声明的路由无法默认的三件事——端点、协议、至少一个模型——会门控创建按钮，因此失败会在用户仍看着该字段时点名它。
 
+`LocalProviderCard` 把同一套声明机制作为本地模型的一级入口。Ollama、vLLM、SGLang 与通用 OpenAI-compatible 预设各自持有稳定路由 id、`openai-completions` 协议和约定的本机 endpoint；卡片允许编辑 endpoint，隐藏由预设决定的 id 与协议，并把模型发现、手工添加模型、可选凭据、revision 检查和 profile 持久化交给 `CustomProviderCard`。已配置的预设会被禁用而不是重复创建；更多实例或非标准 endpoint 仍可从自定义提供方卡片进入。
+
 协议选项来自该 namespace **自己的 schema**，经页面本就会获取的 settings 描述符读出（`providers.*.api` 是适配器 `supportedProtocols()` 的一个 union）。没有新增 wire 字段，客户端里没有常量，提供的选项也无从与被接受的集合发生漂移。
 
 对于目录报告为**已声明**的路由，编辑器够得着它为自己命名的那两个字段——显示名称与该协议。创建卡片索要一个编辑器改不了的字段，等于把该字段留在只有 `settings.yaml` 才能触及的位置，而那正是本记录要终结的姿态。两者都渲染在折叠区里、紧挨着端点，协议读的是同一份 schema。清空名称即取消设置，而路由退回的是该字段所编辑层之下的那一层——`cordis.yml` 可以为目录未提供的路由钉一个名称，因此占位符读组合层，只有没人钉名称时才报路由 id。协议没有可退回的兜底。既然一次保存现在可以改名，保存回执便按刷新后的目录来点名这条路由，而不是按卡片打开时捕获的 target。内置目录路由两个都不给：它的名称由目录条目兜底，它的每个模型各自带着自己的协议，路由级协议只可能把它们全部覆盖掉。
@@ -42,10 +44,10 @@ Status: implemented
 
 ## Consequences
 
-网关、自建服务，或比已安装 catalog 更新的模型，如今无需离开浏览器就能配置，而模型 id 在端点能提供时由端点自己给出。页面多了两个组件和一个共用的列表编辑器；编辑卡片的 pi-ai 折叠区从两个字段长成了一个列表，已声明路由上还多了一个名称输入框和一个协议选择框。
+网关、自建服务，或比已安装 catalog 更新的模型无需离开浏览器即可配置，而模型 id 在端点能提供时由端点自己给出。本地服务拥有不要求用户理解 Provider ID 或 wire 协议的明确入口；预设之外的部署继续使用通用自定义提供方流程。
 
 代价是：只有 pi-ai 路由可以手工声明，因为 `llm-pi-ai` 是唯一一个其 profile 描述整个提供方的 namespace——`llm-deepseek` 路由仍是组合面的事实。询问只覆盖 OpenAI 兼容端点，因此讲其他协议的网关会报告自己无法被询问，其模型需手工键入。另外，页面在一次获取期间会把密钥保存在组件状态里，这与 `credentials.set` 已有的暴露面相同，且不长于卡片的存活时间。
 
 ## Testing
 
-`packages/client/ui-settings-models/tests/provider-form.client.spec.tsx` 在脚本化的协议面之上驱动渲染后的页面：添加、编辑与移除行；被清空的可选字段离开 profile、非整数容量从不进入；询问携带已修改的端点、未保存的密钥，以及 profile 自身的协议；选择框的默认选中、勾选切换、取消，以及「采纳保留已调优的行」；空列表、被拒、传输被拒三条路径；创建写入一份 profile 加其凭据；创建按钮上的每一道门控；以及只读姿态。`protocolChoices` 针对「声明了该 union」与「没有声明」两种 schema 都有覆盖。样式 gate 读取本包自己的源码，任何只取 `.input` 而不取 `.selectInput` 的 `<select>` 都会失败——否则它保留的系统箭头会紧贴 `select.input` 所设 240px 上限的右边缘。编辑器自身的字段清单按路由种类各有断言——内置目录路由止于密钥与端点，已声明路由还带着协议——同时覆盖协议改动只以单条 `api` path op 传出、改名只以单条 `displayName` path op 传出、清空名称是取消设置而不是存入适配器会拒绝的空串，以及不写协议的已声明 profile 什么都不选中、而非选中第一个候选。`apps/web/tests/models-settings.e2e.ts` 经真实协议层重新打开这条已声明路由，捕获该卡片，并断言选定的协议与新名称都抵达了 `settings.yaml`、该行也以新名重新注册。
+`packages/client/ui-settings-models/tests/provider-form.client.spec.tsx` 在脚本化的协议面之上驱动渲染后的页面：添加、编辑与移除行；本地预设切换与 endpoint 默认值；不带凭据创建本地 profile；已配置预设的禁用状态；被清空的可选字段离开 profile、非整数容量从不进入；询问携带已修改的端点、未保存的密钥，以及 profile 自身的协议；选择框的默认选中、勾选切换、取消，以及「采纳保留已调优的行」；空列表、被拒、传输被拒三条路径；创建写入一份 profile 加其凭据；创建按钮上的每一道门控；以及只读姿态。`protocolChoices` 针对「声明了该 union」与「没有声明」两种 schema 都有覆盖。样式 gate 读取本包自己的源码，任何只取 `.input` 而不取 `.selectInput` 的 `<select>` 都会失败——否则它保留的系统箭头会紧贴 `select.input` 所设 240px 上限的右边缘。编辑器自身的字段清单按路由种类各有断言——内置目录路由止于密钥与端点，已声明路由还带着协议——同时覆盖协议改动只以单条 `api` path op 传出、改名只以单条 `displayName` path op 传出、清空名称是取消设置而不是存入适配器会拒绝的空串，以及不写协议的已声明 profile 什么都不选中、而非选中第一个候选。`apps/web/tests/models-settings.e2e.ts` 经真实协议层重新打开这条已声明路由，捕获该卡片，并断言选定的协议与新名称都抵达了 `settings.yaml`、该行也以新名重新注册。
