@@ -28,4 +28,4 @@ Host plugins can resolve `pnpm` on supported desktop platforms without npm, Core
 
 ## Testing
 
-Desktop runtime tests pin the Windows `.cmd` wrapper with spaced installation paths and Electron Node mode, the executable POSIX wrapper, and the managed command directory's first position in Host PATH.
+Desktop runtime tests pin the Windows `.cmd` wrapper with spaced installation paths and Electron Node mode, the executable POSIX wrapper, and the managed command directory's first position in Host PATH. The Windows preview workflow also launches the installed application with a minimal PATH and requires its generated command to report the repository-pinned pnpm version before the installer can be published.

@@ -28,4 +28,4 @@ Desktop 会在 Host 启动前，把名为 `pnpm` 的平台命令代理原子写�
 
 ## Testing
 
-Desktop 运行时测试固定带空格安装路径和 Electron Node 模式的 Windows `.cmd` 代理、可执行的 POSIX 代理，以及受管命令目录位于 Host PATH 首位。
+Desktop 运行时测试固定带空格安装路径和 Electron Node 模式的 Windows `.cmd` 代理、可执行的 POSIX 代理，以及受管命令目录位于 Host PATH 首位。Windows 预览版工作流还会使用最小 PATH 启动已安装应用，并要求它生成的命令在安装包发布前报告仓库固定的 pnpm 版本。
